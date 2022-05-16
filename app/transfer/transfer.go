@@ -21,7 +21,7 @@ import (
 
 var privateKeyStr string
 
-func initTrans(priKeyCt []byte, password []byte) (e error) {
+func InitTrans(priKeyCt []byte, password []byte) (e error) {
 	defer func() {
 		err := recover()
 		if err != nil {
