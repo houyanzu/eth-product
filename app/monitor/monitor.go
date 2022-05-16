@@ -9,7 +9,6 @@ import (
 	"github.com/houyanzu/eth-product/config"
 	"github.com/houyanzu/eth-product/database/chainrecord"
 	"math/big"
-	"sync"
 )
 
 type EthLog struct {
@@ -56,8 +55,7 @@ func Monitor[T any](conf *config.Config[T], contract string, blockDiff uint64) (
 	return
 }
 
-func (e EthLog) Foreach(wg *sync.WaitGroup, f func(index int, l types.Log)) {
-	defer wg.Done()
+func (e EthLog) Foreach(f func(index int, log types.Log)) {
 	for k, v := range e.logs {
 		blockNum := v.BlockNumber
 		hash := v.TxHash.Hex()
