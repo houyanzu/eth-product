@@ -1,4 +1,3 @@
 .idea
-lib/crypto/
 config.json
 main.go
