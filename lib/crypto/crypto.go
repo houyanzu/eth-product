@@ -8,12 +8,6 @@ import (
 	"io"
 )
 
-const key = "c7d353d93af37645f6ebcb12cec316c4"
-
-func EncodePassword(password string) string {
-	return Md5Str(key + Base64StrEncode(password) + key + Md5Str(password))
-}
-
 func Sha1Str(text string) string {
 	t := sha1.New()
 	_, _ = io.WriteString(t, text)

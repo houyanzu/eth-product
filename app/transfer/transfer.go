@@ -21,7 +21,7 @@ import (
 
 var privateKeyStr string
 
-func InitTrans(priKeyCt []byte, password []byte) (e error) {
+func InitTrans(priKeyCt aes.Decoder, password []byte) (e error) {
 	defer func() {
 		err := recover()
 		if err != nil {
@@ -35,8 +35,8 @@ func InitTrans(priKeyCt []byte, password []byte) (e error) {
 		e = errors.New("locked")
 		return
 	}
-	privateKeyByte := aes.Decode(priKeyCt, password)
-	privateKeyStr = string(privateKeyByte)
+	privateKeyByte := priKeyCt.Decode(password)
+	privateKeyStr = privateKeyByte.ToString()
 	pwdwt.New(nil).ResetTimes()
 	return
 }
