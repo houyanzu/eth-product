@@ -13,7 +13,8 @@ import (
 	"strings"
 )
 
-func BalanceOf[T any](conf config.Config[T], token, wallet string) (balance decimal.Decimal) {
+func BalanceOf(token, wallet string) (balance decimal.Decimal) {
+	conf := config.GetConfig()
 	balance = decimal.Zero
 	client, err := ethclient.Dial(conf.Eth.Host)
 	if err != nil {
@@ -33,7 +34,8 @@ func BalanceOf[T any](conf config.Config[T], token, wallet string) (balance deci
 	return
 }
 
-func GetTxStatus[T any](conf config.Config[T], hash string) (status uint64, err error) {
+func GetTxStatus(hash string) (status uint64, err error) {
+	conf := config.GetConfig()
 	client, err := ethclient.Dial(conf.Eth.Host)
 	if err != nil {
 		return
@@ -51,7 +53,8 @@ func GetTxStatus[T any](conf config.Config[T], hash string) (status uint64, err 
 	return
 }
 
-func GetUniPrice[T any](conf config.Config[T], pair, token string, amount *big.Int) (price *big.Int, err error) {
+func GetUniPrice(pair, token string, amount *big.Int) (price *big.Int, err error) {
+	conf := config.GetConfig()
 	client, err := ethclient.Dial(conf.Eth.Host)
 	if err != nil {
 		return

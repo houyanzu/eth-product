@@ -21,9 +21,9 @@ var (
 )
 
 // InitMysql .
-func InitMysql[T any](conf *config.Config[T]) error {
+func InitMysql() error {
 	var err error
-	//config := conf.GetConfig()
+	conf := config.GetConfig()
 
 	param := fmt.Sprintf("%s:%s@(%s:%s)/%s?charset=%s&parseTime=True&loc=Local",
 		conf.Mysql.User, conf.Mysql.Password, conf.Mysql.Host, conf.Mysql.Port, conf.Mysql.DBName, conf.Mysql.Charset)

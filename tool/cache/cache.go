@@ -14,7 +14,8 @@ import (
 var ca imcache.Cache
 
 // InitCache .
-func InitCache[T any](conf config.Config[T]) error {
+func InitCache() error {
+	conf := config.GetConfig()
 	redisConfig := `{
 		"conn": "redis://` + conf.Redis.Password + `@` + conf.Redis.Host + `:` + conf.Redis.Port + `",
 		"dbNum": "` + fmt.Sprintf("%v", conf.Redis.Db) + `",

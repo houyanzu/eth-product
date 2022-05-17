@@ -18,7 +18,8 @@ type EthLog struct {
 	contract    string
 }
 
-func Monitor[T any](conf *config.Config[T], contract string, blockDiff uint64) (res EthLog, err error) {
+func Monitor(contract string, blockDiff uint64) (res EthLog, err error) {
+	conf := config.GetConfig()
 	client, err := ethclient.Dial(conf.Eth.Host)
 	if err != nil {
 		return

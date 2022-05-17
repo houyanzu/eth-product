@@ -16,7 +16,6 @@ import (
 	"github.com/houyanzu/eth-product/lib/crypto/aes"
 	"github.com/houyanzu/eth-product/tool/eth"
 	"math/big"
-	"sync"
 )
 
 var privateKeyStr string
@@ -41,12 +40,11 @@ func InitTrans(priKeyCt aes.Decoder, password []byte) (e error) {
 	return
 }
 
-func Transfer[T any](wg *sync.WaitGroup, conf config.Config[T], limit int) (err error) {
-	defer wg.Done()
-
+func Transfer(limit int) (err error) {
+	conf := config.GetConfig()
 	pending := transferrecords.New(nil).InitPending()
 	if pending.Data.ID > 0 {
-		status, err := eth.GetTxStatus(conf, pending.Data.Hash)
+		status, err := eth.GetTxStatus(pending.Data.Hash)
 		if err != nil {
 			//TODO:覆盖操作
 			return

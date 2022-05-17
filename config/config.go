@@ -1,16 +1,10 @@
 package config
 
-import (
-	"encoding/json"
-	"io/ioutil"
-)
-
 // DB .
-type Config[T any] struct {
-	Mysql  mysqlConfig `json:"mysql"`
-	Redis  redisConfig `json:"redis"`
-	Common T           `json:"common"`
-	Eth    ethConfig   `json:"eth"`
+type Config struct {
+	Mysql mysqlConfig `json:"mysql"`
+	Redis redisConfig `json:"redis"`
+	Eth   ethConfig   `json:"eth"`
 }
 
 type mysqlConfig struct {
@@ -37,34 +31,13 @@ type ethConfig struct {
 	MultiTransferContract string `json:"multi_transfer_contract"`
 }
 
+var internalConfig *Config
+
 // ParseConfig .
-func ParseConfig[T any](fileName string) (res Config[T], err error) {
-	dat, err := ioutil.ReadFile(fileName)
-	if err != nil {
-		return
-	}
-
-	err = json.Unmarshal(dat, &res)
-	if err != nil {
-		return
-	}
-
-	return
+func ParseConfig(conf *Config) {
+	internalConfig = conf
 }
 
-// GetConfig .
-//func GetConfig[T any]() *Config[T] {
-//	return config
-//}
-
-//func CreateConfigFile() {
-//	var conf Config
-//	js, err := json.Marshal(conf)
-//	if err != nil {
-//		panic(err)
-//	}
-//	err = os.WriteFile("config.json", js, 0777)
-//	if err != nil {
-//		panic(err)
-//	}
-//}
+func GetConfig() *Config {
+	return internalConfig
+}
