@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-type ChainRecord struct {
+type MonitorChainRecord struct {
 	ID         uint
 	Contract   string
 	BlockNum   uint64
@@ -16,7 +16,7 @@ type ChainRecord struct {
 	CreateTime mytime.DateTime
 }
 
-func (c *ChainRecord) BeforeCreate(tx *gorm.DB) error {
+func (c *MonitorChainRecord) BeforeCreate(tx *gorm.DB) error {
 	c.Contract = strings.ToLower(c.Contract)
 	c.CreateTime = mytime.NewFromNow()
 	return nil
@@ -24,13 +24,13 @@ func (c *ChainRecord) BeforeCreate(tx *gorm.DB) error {
 
 func createTable() error {
 	db := database.GetDB()
-	return db.Exec("CREATE TABLE `chain_record` (\n\t`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,\n\t`contract` char(42) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`block_num` int(11) UNSIGNED NOT NULL,\n\t`event_id` char(66) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`hash` char(66) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`create_time` datetime NOT NULL,\n\tPRIMARY KEY (`id`),\n\tKEY `cb`(`contract`,`block_num`) USING BTREE\n) ENGINE=InnoDB\nDEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci\nAUTO_INCREMENT=1\nROW_FORMAT=DYNAMIC\nAVG_ROW_LENGTH=0;").Error
+	return db.Exec("CREATE TABLE `monitor_chain_record` (\n\t`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,\n\t`contract` char(42) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`block_num` int(11) UNSIGNED NOT NULL,\n\t`event_id` char(66) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`hash` char(66) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`create_time` datetime NOT NULL,\n\tPRIMARY KEY (`id`),\n\tKEY `cb`(`contract`,`block_num`) USING BTREE\n) ENGINE=InnoDB\nDEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci\nAUTO_INCREMENT=1\nROW_FORMAT=DYNAMIC\nAVG_ROW_LENGTH=0;").Error
 }
 
 type Model struct {
 	*database.MysqlContext
-	Data  ChainRecord
-	List  []ChainRecord
+	Data  MonitorChainRecord
+	List  []MonitorChainRecord
 	Total int64
 }
 
@@ -38,8 +38,8 @@ func New(ctx *database.MysqlContext) *Model {
 	if ctx == nil {
 		ctx = database.GetContext()
 	}
-	list := make([]ChainRecord, 0)
-	data := ChainRecord{}
+	list := make([]MonitorChainRecord, 0)
+	data := MonitorChainRecord{}
 	hasTable := ctx.Db.Migrator().HasTable(&data)
 	if !hasTable {
 		err := createTable()
@@ -50,7 +50,7 @@ func New(ctx *database.MysqlContext) *Model {
 	return &Model{ctx, data, list, 0}
 }
 
-func (m *Model) InitByUserData(data ChainRecord) *Model {
+func (m *Model) InitByUserData(data MonitorChainRecord) *Model {
 	m.Data = data
 	return m
 }
@@ -68,7 +68,7 @@ func (m *Model) Add() {
 
 func GetLastBlockNum(contract string) uint64 {
 	db := database.GetDB()
-	var c ChainRecord
+	var c MonitorChainRecord
 	db.Where("contract = ?", contract).Order("block_num desc").Take(&c)
 	return c.BlockNum
 }
