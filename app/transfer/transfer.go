@@ -44,7 +44,8 @@ func Transfer(limit int) (err error) {
 	conf := config.GetConfig()
 	pending := transferrecords.New(nil).InitPending()
 	if pending.Data.ID > 0 {
-		status, err := eth.GetTxStatus(pending.Data.Hash)
+		var status uint64
+		status, err = eth.GetTxStatus(pending.Data.Hash)
 		if err != nil {
 			//TODO:覆盖操作
 			return
