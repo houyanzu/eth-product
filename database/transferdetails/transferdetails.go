@@ -18,6 +18,8 @@ type TransferDetails struct {
 	CreateTime mytime.DateTime
 }
 
+var haveTable = false
+
 func (c *TransferDetails) BeforeCreate(tx *gorm.DB) error {
 	c.Token = strings.ToLower(c.Token)
 	c.To = strings.ToLower(c.To)
@@ -44,12 +46,15 @@ func New(ctx *database.MysqlContext) *Model {
 	}
 	list := make([]TransferDetails, 0)
 	data := TransferDetails{}
-	hasTable := ctx.Db.Migrator().HasTable(&data)
-	if !hasTable {
-		err := createTable()
-		if err != nil {
-			panic(err)
+	if !haveTable {
+		hasTable := ctx.Db.Migrator().HasTable(&data)
+		if !hasTable {
+			err := createTable()
+			if err != nil {
+				panic(err)
+			}
 		}
+		haveTable = true
 	}
 	return &Model{ctx, data, list, 0}
 }

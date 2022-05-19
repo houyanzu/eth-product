@@ -16,6 +16,8 @@ type MonitorChainRecord struct {
 	CreateTime mytime.DateTime
 }
 
+var haveTable = false
+
 func (c *MonitorChainRecord) BeforeCreate(tx *gorm.DB) error {
 	c.Contract = strings.ToLower(c.Contract)
 	c.CreateTime = mytime.NewFromNow()
@@ -40,13 +42,17 @@ func New(ctx *database.MysqlContext) *Model {
 	}
 	list := make([]MonitorChainRecord, 0)
 	data := MonitorChainRecord{}
-	hasTable := ctx.Db.Migrator().HasTable(&data)
-	if !hasTable {
-		err := createTable()
-		if err != nil {
-			panic(err)
+	if !haveTable {
+		hasTable := ctx.Db.Migrator().HasTable(&data)
+		if !hasTable {
+			err := createTable()
+			if err != nil {
+				panic(err)
+			}
 		}
+		haveTable = true
 	}
+
 	return &Model{ctx, data, list, 0}
 }
 
