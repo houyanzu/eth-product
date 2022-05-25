@@ -87,8 +87,9 @@ func (e EthLog) Foreach(f func(index int, log types.Log)) {
 		record.Add()
 		f(k, v)
 	}
-	if e.endBlockNum <= e.netLastNum {
+	if e.endBlockNum < e.netLastNum {
 		record := chainrecord.New(nil)
+		record.Data.Contract = e.contract
 		record.Data.BlockNum = e.endBlockNum
 		record.Add()
 	}
