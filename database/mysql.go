@@ -1,7 +1,6 @@
 package database
 
 import (
-	"errors"
 	"fmt"
 	"github.com/houyanzu/eth-product/config"
 	"gorm.io/gorm"
@@ -44,7 +43,10 @@ func InitMysql() error {
 // GetDB .
 func GetDB() *gorm.DB {
 	if sqlDB == nil {
-		panic(errors.New("mysql is not init"))
+		err := InitMysql()
+		if err != nil {
+			panic(err)
+		}
 	}
 	return sqlDB
 }
