@@ -2,32 +2,31 @@ package monitor
 
 import (
 	"context"
-	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/houyanzu/eth-product/config"
 	"github.com/houyanzu/eth-product/database/chainrecord"
 	"math/big"
-	"strings"
 )
 
-type EventLog struct {
-	logs        []types.Log
+type EthLog struct {
+	logs        []transferLog
 	netLastNum  uint64
 	endBlockNum uint64
 	contract    string
 }
 
-var initBlock = make(map[string]uint64)
-
-func InitBlockNum(contract string, blockNum uint64) {
-	contract = strings.ToLower(contract)
-	initBlock[contract] = blockNum
+type transferLog struct {
+	TxHash      common.Hash
+	BlockNumber uint64
+	From        common.Address
+	To          common.Address
+	Amount      *big.Int
 }
 
-func Monitor(contract string, blockDiff uint64) (res EventLog, err error) {
-	contract = strings.ToLower(contract)
+func MonitorEth(blockDiff uint64) (res EthLog, err error) {
+	contract := "0x0000000000000000000000000000000000000000"
 	conf := config.GetConfig()
 	client, err := ethclient.Dial(conf.Eth.Host)
 	if err != nil {
@@ -53,21 +52,22 @@ func Monitor(contract string, blockDiff uint64) (res EventLog, err error) {
 		return
 	}
 	netLastNum := header.Number.Uint64()
+	startBlockNum := lastBlockNum + 1
 	endBlockNum := lastBlockNum + blockDiff
 
-	contractAddress := common.HexToAddress(contract)
-	query := ethereum.FilterQuery{
-		FromBlock: big.NewInt(int64(lastBlockNum + 1)),
-		ToBlock:   big.NewInt(int64(endBlockNum)),
-		Addresses: []common.Address{
-			contractAddress,
-		},
+	logs := make([]transferLog, 0)
+	for i := startBlockNum; i <= endBlockNum; i++ {
+		var block *types.Block
+		block, err = client.BlockByNumber(context.Background(), big.NewInt(int64(i)))
+		if err != nil {
+			return
+		}
+		for _, tx := range block.Transactions() {
+			msg, _ := tx.AsMessage(types.NewEIP155Signer(big.NewInt(conf.Eth.ChainId)), nil)
+			logs = append(logs, transferLog{tx.Hash(), i, msg.From(), *tx.To(), tx.Value()})
+		}
 	}
 
-	logs, err := client.FilterLogs(context.Background(), query)
-	if err != nil {
-		return
-	}
 	res.logs = logs
 	res.netLastNum = netLastNum
 	res.endBlockNum = endBlockNum
@@ -75,14 +75,14 @@ func Monitor(contract string, blockDiff uint64) (res EventLog, err error) {
 	return
 }
 
-func (e EventLog) Foreach(f func(index int, log types.Log)) {
+func (e EthLog) Foreach(f func(index int, log transferLog)) {
 	for k, v := range e.logs {
 		blockNum := v.BlockNumber
 		hash := v.TxHash.Hex()
 		record := chainrecord.New(nil)
 		record.Data.Contract = e.contract
 		record.Data.BlockNum = blockNum
-		record.Data.EventId = v.Topics[0].Hex()
+		record.Data.EventId = ""
 		record.Data.Hash = hash
 		record.Add()
 		f(k, v)
