@@ -60,7 +60,10 @@ func MonitorEth(blockDiff uint64) (res EthLog, err error) {
 		var block *types.Block
 		block, err = client.BlockByNumber(context.Background(), big.NewInt(int64(i)))
 		if err != nil {
-			return
+			block, err = client.BlockByNumber(context.Background(), big.NewInt(int64(i)))
+			if err != nil {
+				continue
+			}
 		}
 		for _, tx := range block.Transactions() {
 			msg, _ := tx.AsMessage(types.NewEIP155Signer(big.NewInt(conf.Eth.ChainId)), nil)
