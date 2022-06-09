@@ -36,12 +36,13 @@ func New(ctx *database.MysqlContext) *Model {
 			panic(err)
 		}
 		data.ID = 1
+		ctx.Db.Create(&data)
 	}
 	return &Model{ctx, data}
 }
 
 func (m *Model) Wrong() {
-	m.Db.Exec("UPDATE `times` SET `times` = `times` + 1 WHERE `id` = 1;")
+	m.Db.Exec("UPDATE `password_wrong_times` SET `times` = `times` + 1 WHERE `id` = 1;")
 }
 
 func (m *Model) GetTimes() uint {
@@ -50,5 +51,5 @@ func (m *Model) GetTimes() uint {
 }
 
 func (m *Model) ResetTimes() {
-	m.Db.Exec("UPDATE `times` SET `times` = 0 WHERE `id` = 1;")
+	m.Db.Exec("UPDATE `password_wrong_times` SET `times` = 0 WHERE `id` = 1;")
 }
