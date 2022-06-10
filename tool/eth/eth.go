@@ -34,6 +34,24 @@ func BalanceOf(token, wallet string) (balance decimal.Decimal) {
 	return
 }
 
+func BalanceAt(addr string) (balance decimal.Decimal, err error) {
+	balance = decimal.Zero
+	conf := config.GetConfig()
+	client, err := ethclient.Dial(conf.Eth.Host)
+	if err != nil {
+		return
+	}
+
+	account := common.HexToAddress(addr)
+	ba, err := client.BalanceAt(context.Background(), account, nil)
+	if err != nil {
+		return
+	}
+
+	balance = decimal.NewFromBigInt(ba, 0)
+	return
+}
+
 func GetTxStatus(hash string) (status uint64, err error) {
 	conf := config.GetConfig()
 	client, err := ethclient.Dial(conf.Eth.Host)
