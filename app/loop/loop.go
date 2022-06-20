@@ -31,6 +31,7 @@ func Loop(t int, fs ...func(wg *sync.WaitGroup)) {
 
 	<-c
 	fmt.Println("正在退出，请稍后...")
+	wg.Wait()
 	fmt.Println("退出成功！")
 	os.Exit(0)
 }
