@@ -10,9 +10,11 @@ import (
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/houyanzu/eth-product/config"
+	"github.com/houyanzu/eth-product/database/locktransferdetails"
 	"github.com/houyanzu/eth-product/database/pwdwt"
 	"github.com/houyanzu/eth-product/database/transferdetails"
 	"github.com/houyanzu/eth-product/database/transferrecords"
+	"github.com/houyanzu/eth-product/lib/contract/locktransfer"
 	"github.com/houyanzu/eth-product/lib/contract/multitransfer"
 	"github.com/houyanzu/eth-product/lib/contract/standardcoin"
 	"github.com/houyanzu/eth-product/lib/crypto/aes"
@@ -21,6 +23,7 @@ import (
 )
 
 var privateKeyStr string
+var FromAddress string
 
 func InitTrans(priKeyCt aes.Decoder, password []byte) (e error) {
 	defer func() {
@@ -39,12 +42,25 @@ func InitTrans(priKeyCt aes.Decoder, password []byte) (e error) {
 	privateKeyByte := priKeyCt.Decode(password)
 	privateKeyStr = privateKeyByte.ToString()
 	pwdwt.New(nil).ResetTimes()
+
+	privateKey, e := crypto.HexToECDSA(privateKeyStr)
+	if e != nil {
+		return
+	}
+
+	publicKey := privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		e = errors.New("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+		return
+	}
+	FromAddress = crypto.PubkeyToAddress(*publicKeyECDSA).Hex()
 	return
 }
 
 func Transfer(limit int) (err error) {
 	conf := config.GetConfig()
-	pending := transferrecords.New(nil).InitPending()
+	pending := transferrecords.New(nil).InitPending(FromAddress)
 	if pending.Data.ID > 0 {
 		var status uint64
 		status, err = eth.GetTxStatus(pending.Data.Hash)
@@ -54,10 +70,18 @@ func Transfer(limit int) (err error) {
 		}
 		if status == 1 {
 			pending.SetSuccess()
-			transferdetails.New(nil).SetSuccess(pending.Data.ID)
+			if pending.Data.Type == 1 {
+				transferdetails.New(nil).SetSuccess(pending.Data.ID)
+			} else if pending.Data.Type == 2 {
+				locktransferdetails.New(nil).SetSuccess(pending.Data.ID)
+			}
 		} else if status == 0 {
 			pending.SetFail()
-			transferdetails.New(nil).SetFail(pending.Data.ID)
+			if pending.Data.Type == 1 {
+				transferdetails.New(nil).SetFail(pending.Data.ID)
+			} else if pending.Data.Type == 2 {
+				locktransferdetails.New(nil).SetFail(pending.Data.ID)
+			}
 		}
 	}
 
@@ -90,13 +114,7 @@ func Transfer(limit int) (err error) {
 	if err != nil {
 		return
 	}
-	publicKey := privateKey.Public()
-	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
-	if !ok {
-		return
-	}
-	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA)
-	nonce, err := client.NonceAt(context.Background(), fromAddress, nil)
+	nonce, err := client.NonceAt(context.Background(), common.HexToAddress(FromAddress), nil)
 	if err != nil {
 		return
 	}
@@ -126,11 +144,106 @@ func Transfer(limit int) (err error) {
 	hash := tx.Hash().Hex()
 
 	tr := transferrecords.New(nil)
+	tr.Data.Type = 1
+	tr.Data.From = FromAddress
 	tr.Data.Hash = hash
 	tr.Data.Nonce = nonce
 	tr.Add()
 
 	transferdetails.New(nil).SetExec(ids, tr.Data.ID)
+	return
+}
+
+func LockTransfer() (err error) {
+	limit := 1
+	conf := config.GetConfig()
+	pending := transferrecords.New(nil).InitPending(FromAddress)
+	if pending.Data.ID > 0 {
+		var status uint64
+		status, err = eth.GetTxStatus(pending.Data.Hash)
+		if err != nil {
+			//TODO:覆盖操作
+			return
+		}
+		if status == 1 {
+			pending.SetSuccess()
+			if pending.Data.Type == 1 {
+				transferdetails.New(nil).SetSuccess(pending.Data.ID)
+			} else if pending.Data.Type == 2 {
+				locktransferdetails.New(nil).SetSuccess(pending.Data.ID)
+			}
+		} else if status == 0 {
+			pending.SetFail()
+			if pending.Data.Type == 1 {
+				transferdetails.New(nil).SetFail(pending.Data.ID)
+			} else if pending.Data.Type == 2 {
+				locktransferdetails.New(nil).SetFail(pending.Data.ID)
+			}
+		}
+	}
+
+	waitingList := locktransferdetails.New(nil).InitWaitingList(limit)
+	length := len(waitingList.List)
+	if length == 0 {
+		return
+	}
+
+	waiting := locktransferdetails.New(nil).InitByData(waitingList.List[0])
+
+	client, err := ethclient.Dial(conf.Eth.Host)
+	if err != nil {
+		return
+	}
+
+	privateKey, err := crypto.HexToECDSA(privateKeyStr)
+	if err != nil {
+		return
+	}
+	nonce, err := client.NonceAt(context.Background(), common.HexToAddress(FromAddress), nil)
+	if err != nil {
+		return
+	}
+	gasPrice, err := client.SuggestGasPrice(context.Background())
+	if err != nil {
+		return
+	}
+
+	auth, err := bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(conf.Eth.ChainId))
+	if err != nil {
+		return
+	}
+	auth.Nonce = big.NewInt(int64(nonce))
+	auth.Value = big.NewInt(0)     // in wei
+	auth.GasLimit = uint64(250000) // in units
+	auth.GasPrice = gasPrice
+
+	ltCon := common.HexToAddress(conf.Eth.LockTransferContract)
+	ltInstance, err := locktransfer.NewLocktransfer(ltCon, client)
+	if err != nil {
+		return
+	}
+	tx, err := ltInstance.LockTransfer(
+		auth,
+		common.HexToAddress(waiting.Data.Token),
+		common.HexToAddress(waiting.Data.Token),
+		waiting.Data.Amount.BigInt(),
+		big.NewInt(int64(waiting.Data.ReleaseStartTime)),
+		big.NewInt(int64(waiting.Data.ReleaseCycle)),
+		big.NewInt(int64(waiting.Data.ReleaseTimes)),
+	)
+	if err != nil {
+		return
+	}
+	hash := tx.Hash().Hex()
+
+	tr := transferrecords.New(nil)
+	tr.Data.Type = 2
+	tr.Data.From = FromAddress
+	tr.Data.Hash = hash
+	tr.Data.Nonce = nonce
+	tr.Add()
+
+	transferdetails.New(nil).SetExec([]uint{waiting.Data.ID}, tr.Data.ID)
 	return
 }
 

@@ -29,6 +29,7 @@ type ethConfig struct {
 	Host                  string `json:"host"`
 	ChainId               int64  `json:"chain_id"`
 	MultiTransferContract string `json:"multi_transfer_contract"`
+	LockTransferContract  string `json:"lock_transfer_contract"`
 }
 
 var internalConfig *Config

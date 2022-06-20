@@ -4,10 +4,13 @@ import (
 	"github.com/houyanzu/eth-product/database"
 	"github.com/houyanzu/eth-product/lib/mytime"
 	"gorm.io/gorm"
+	"strings"
 )
 
 type TransferRecords struct {
 	ID         uint
+	Type       int8
+	From       string
 	Hash       string
 	Status     int8
 	Nonce      uint64
@@ -17,6 +20,7 @@ type TransferRecords struct {
 var haveTable = false
 
 func (c *TransferRecords) BeforeCreate(tx *gorm.DB) error {
+	c.From = strings.ToLower(c.From)
 	c.Status = 1
 	c.CreateTime = mytime.NewFromNow()
 	return nil
@@ -24,7 +28,7 @@ func (c *TransferRecords) BeforeCreate(tx *gorm.DB) error {
 
 func createTable() error {
 	db := database.GetDB()
-	return db.Exec("CREATE TABLE `transfer_records` (\n\t`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,\n\t`hash` char(66) NOT NULL,\n\t`nonce` int(11) UNSIGNED NOT NULL,\n\t`status` tinyint(1) NOT NULL,\n\t`create_time` datetime NOT NULL,\n\tPRIMARY KEY (`id`)\n) ENGINE=InnoDB\nDEFAULT CHARACTER SET=utf8;").Error
+	return db.Exec("CREATE TABLE `transfer_records` (\n`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,\n`type` tinyint(1) NOT NULL,\n`from` char(42) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n`hash` char(66) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n`nonce` int(11) UNSIGNED NOT NULL,\n`status` tinyint(1) NOT NULL,\n`create_time` datetime NOT NULL,\nPRIMARY KEY (`id`)\n) ENGINE=InnoDB\nDEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci\nAUTO_INCREMENT=1\nROW_FORMAT=DYNAMIC;").Error
 }
 
 type Model struct {
@@ -69,8 +73,8 @@ func (m *Model) Add() {
 	m.Error = m.Db.Create(&m.Data).Error
 }
 
-func (m *Model) InitPending() *Model {
-	m.Error = m.Db.Where("status = 1").Take(&m.Data).Error
+func (m *Model) InitPending(from string) *Model {
+	m.Error = m.Db.Where("`from` = ? AND `status` = 1", strings.ToLower(from)).Take(&m.Data).Error
 	return m
 }
 

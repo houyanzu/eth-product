@@ -1,4 +1,4 @@
-package transferdetails
+package locktransferdetails
 
 import (
 	"github.com/houyanzu/eth-product/database"
@@ -8,35 +8,39 @@ import (
 	"strings"
 )
 
-type TransferDetails struct {
-	ID         uint
-	Token      string
-	To         string
-	Amount     decimal.Decimal
-	Status     int8
-	TransferId uint
-	CreateTime mytime.DateTime
+type LockTransferDetails struct {
+	ID               uint
+	LockContract     string
+	Token            string
+	To               string
+	Amount           decimal.Decimal
+	ReleaseStartTime uint
+	ReleaseCycle     uint
+	ReleaseTimes     uint
+	Status           int8
+	TransferId       uint
+	CreateTime       mytime.DateTime
 }
 
 var haveTable = false
 
-func (c *TransferDetails) BeforeCreate(tx *gorm.DB) error {
-	c.Token = strings.ToLower(c.Token)
-	c.To = strings.ToLower(c.To)
-	c.Status = 0
-	c.CreateTime = mytime.NewFromNow()
+func (l *LockTransferDetails) BeforeCreate(tx *gorm.DB) error {
+	l.LockContract = strings.ToLower(l.LockContract)
+	l.Token = strings.ToLower(l.Token)
+	l.To = strings.ToLower(l.To)
+	l.CreateTime = mytime.NewFromNow()
 	return nil
 }
 
 func createTable() error {
 	db := database.GetDB()
-	return db.Exec("CREATE TABLE `transfer_details` (\n\t`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,\n\t`token` char(42) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '',\n\t`to` char(42) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '',\n\t`amount` decimal(32,0)  UNSIGNED NOT NULL DEFAULT 0,\n\t`status` tinyint(1) NOT NULL,\n\t`transfer_id` int(11) NOT NULL DEFAULT 0,\n\t`create_time` datetime NOT NULL,\n\tPRIMARY KEY (`id`),\n\tKEY `trans`(`transfer_id`) USING BTREE\n) ENGINE=InnoDB\nDEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci\nAUTO_INCREMENT=2\nROW_FORMAT=DYNAMIC\nAVG_ROW_LENGTH=16384;").Error
+	return db.Exec("CREATE TABLE `lock_transfer_details` (\n\t`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,\n\t`lock_contract` char(42) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`token` char(42) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`to` char(42) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`amount` decimal(32,0)  UNSIGNED NOT NULL DEFAULT 0,\n\t`release_start_time` int(11) UNSIGNED NOT NULL,\n\t`release_cycle` int(11) UNSIGNED NOT NULL,\n\t`release_times` int(11) UNSIGNED NOT NULL,\n\t`status` tinyint(1) NOT NULL,\n\t`transfer_id` int(11) NOT NULL,\n\t`create_time` datetime NOT NULL,\n\tPRIMARY KEY (`id`)\n) ENGINE=InnoDB\nDEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci\nROW_FORMAT=DYNAMIC;").Error
 }
 
 type Model struct {
 	*database.MysqlContext
-	Data  TransferDetails
-	List  []TransferDetails
+	Data  LockTransferDetails
+	List  []LockTransferDetails
 	Total int64
 }
 
@@ -44,8 +48,8 @@ func New(ctx *database.MysqlContext) *Model {
 	if ctx == nil {
 		ctx = database.GetContext()
 	}
-	list := make([]TransferDetails, 0)
-	data := TransferDetails{}
+	list := make([]LockTransferDetails, 0)
+	data := LockTransferDetails{}
 	if !haveTable {
 		hasTable := ctx.Db.Migrator().HasTable(&data)
 		if !hasTable {
@@ -59,7 +63,7 @@ func New(ctx *database.MysqlContext) *Model {
 	return &Model{ctx, data, list, 0}
 }
 
-func (m *Model) InitByData(data TransferDetails) *Model {
+func (m *Model) InitByData(data LockTransferDetails) *Model {
 	m.Data = data
 	return m
 }
