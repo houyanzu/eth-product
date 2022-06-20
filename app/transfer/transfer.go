@@ -225,7 +225,7 @@ func LockTransfer() (err error) {
 	tx, err := ltInstance.LockTransfer(
 		auth,
 		common.HexToAddress(waiting.Data.Token),
-		common.HexToAddress(waiting.Data.Token),
+		common.HexToAddress(waiting.Data.To),
 		waiting.Data.Amount.BigInt(),
 		big.NewInt(int64(waiting.Data.ReleaseStartTime)),
 		big.NewInt(int64(waiting.Data.ReleaseCycle)),
