@@ -243,7 +243,7 @@ func LockTransfer() (err error) {
 	tr.Data.Nonce = nonce
 	tr.Add()
 
-	transferdetails.New(nil).SetExec([]uint{waiting.Data.ID}, tr.Data.ID)
+	locktransferdetails.New(nil).SetExec([]uint{waiting.Data.ID}, tr.Data.ID)
 	return
 }
 
