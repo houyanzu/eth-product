@@ -13,7 +13,7 @@ import (
 	"strings"
 )
 
-func BalanceOf(token, wallet string) (balance decimal.Decimal) {
+func BalanceOf(token, wallet string) (balance decimal.Decimal, err error) {
 	conf := config.GetConfig()
 	balance = decimal.Zero
 	client, err := ethclient.Dial(conf.Eth.Host)
