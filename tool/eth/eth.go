@@ -9,7 +9,9 @@ import (
 	"github.com/houyanzu/eth-product/lib/contract/standardcoin"
 	"github.com/houyanzu/eth-product/lib/contract/unipair"
 	"github.com/shopspring/decimal"
+	"log"
 	"math/big"
+	"regexp"
 	"strings"
 )
 
@@ -181,6 +183,27 @@ func GetUniPrice(pair, token string, amount *big.Int) (price *big.Int, err error
 	}
 
 	return nil, errors.New("wrong token")
+}
+
+func IsAddress(addr string) bool {
+	re := regexp.MustCompile("^0x[0-9a-fA-F]{40}$")
+	return re.MatchString(addr)
+}
+
+func IsContract(addr string) (res bool, err error) {
+	conf := config.GetConfig()
+	client, err := ethclient.Dial(conf.Eth.Host)
+	if err != nil {
+		return
+	}
+	address := common.HexToAddress(addr)
+	bytecode, err := client.CodeAt(context.Background(), address, nil) // nil is latest block
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	res = len(bytecode) > 0
+	return
 }
 
 func quote(amountA, reserveA, reserveB *big.Int) *big.Int {
