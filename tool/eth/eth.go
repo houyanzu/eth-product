@@ -191,6 +191,9 @@ func IsAddress(addr string) bool {
 }
 
 func IsContract(addr string) (res bool, err error) {
+	if !IsAddress(addr) {
+		return false, nil
+	}
 	conf := config.GetConfig()
 	client, err := ethclient.Dial(conf.Eth.Host)
 	if err != nil {
