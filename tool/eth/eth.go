@@ -2,8 +2,11 @@ package eth
 
 import (
 	"context"
+	"crypto/ecdsa"
 	"errors"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/houyanzu/eth-product/config"
 	"github.com/houyanzu/eth-product/lib/contract/standardcoin"
@@ -14,6 +17,44 @@ import (
 	"regexp"
 	"strings"
 )
+
+func GetClientAndAuth(priKey string, gasLimit uint64, value *big.Int) (client *ethclient.Client, auth *bind.TransactOpts, err error) {
+	conf := config.GetConfig()
+	client, err = ethclient.Dial(conf.Eth.Host)
+	if err != nil {
+		return
+	}
+
+	privateKey, err := crypto.HexToECDSA(priKey)
+	if err != nil {
+		return
+	}
+	publicKey := privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		err = errors.New("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+		return
+	}
+	fromAddress := crypto.PubkeyToAddress(*publicKeyECDSA).Hex()
+	nonce, err := client.NonceAt(context.Background(), common.HexToAddress(fromAddress), nil)
+	if err != nil {
+		return
+	}
+	gasPrice, err := client.SuggestGasPrice(context.Background())
+	if err != nil {
+		return
+	}
+
+	auth, err = bind.NewKeyedTransactorWithChainID(privateKey, big.NewInt(conf.Eth.ChainId))
+	if err != nil {
+		return
+	}
+	auth.Nonce = big.NewInt(int64(nonce))
+	auth.Value = value       // in wei
+	auth.GasLimit = gasLimit // in units
+	auth.GasPrice = gasPrice
+	return
+}
 
 func BalanceOf(token, wallet string) (balance decimal.Decimal, err error) {
 	conf := config.GetConfig()
