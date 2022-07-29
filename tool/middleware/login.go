@@ -11,6 +11,10 @@ func Login() gin.HandlerFunc {
 	return loginHandler
 }
 
+func AdminLogin() gin.HandlerFunc {
+	return loginHandler
+}
+
 func loginHandler(c *gin.Context) {
 	token := c.GetHeader("token")
 	account := c.GetHeader("wallet")
@@ -71,6 +75,52 @@ func loginHandler(c *gin.Context) {
 		c.Abort()
 		return
 	}
+	c.Set("userId", userId)
+	c.Next()
+	return
+}
+
+func adminLoginHandler(c *gin.Context) {
+	token := c.GetHeader("token")
+	tokenKey := "admin_" + token
+	lang := c.GetHeader("Language")
+	if token == "" {
+		if lang == "zh" {
+			c.JSON(http.StatusOK, gin.H{
+				"code": 3,
+				"msg":  "亲，登陆过期了，需要重新登录哟",
+				"data": gin.H{},
+			})
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"code": 3,
+				"msg":  "Session expired, Please Login",
+				"data": gin.H{},
+			})
+		}
+		c.Abort()
+		return
+	}
+
+	userId := cache.GetInt(tokenKey)
+	if userId <= 0 {
+		if lang == "zh" {
+			c.JSON(http.StatusOK, gin.H{
+				"code": 3,
+				"msg":  "亲，登陆过期了，需要重新登录哟",
+				"data": gin.H{},
+			})
+		} else {
+			c.JSON(http.StatusOK, gin.H{
+				"code": 3,
+				"msg":  "Session expired, Please Login",
+				"data": gin.H{},
+			})
+		}
+		c.Abort()
+		return
+	}
+
 	c.Set("userId", userId)
 	c.Next()
 	return
