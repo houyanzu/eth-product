@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/ecdsa"
 	"errors"
+	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/crypto"
@@ -248,6 +249,29 @@ func IsContract(addr string) (res bool, err error) {
 
 	res = len(bytecode) > 0
 	return
+}
+
+func GetGasFeeByHash(hash string) (decimal.Decimal, error) {
+	conf := config.GetConfig()
+
+	client, err := ethclient.Dial(conf.Eth.Host)
+	if err != nil {
+		return decimal.Zero, err
+	}
+	tx, _, err := client.TransactionByHash(context.Background(), common.HexToHash(hash))
+	if err != nil {
+		return decimal.Decimal{}, err
+	}
+	gasPrice := decimal.NewFromBigInt(tx.GasPrice(), 0)
+
+	receipt, err := client.TransactionReceipt(context.Background(), common.HexToHash(hash))
+	if err != nil {
+		return decimal.Decimal{}, err
+	}
+	gasUsedInt := receipt.GasUsed
+	gasUsed, _ := decimal.NewFromString(fmt.Sprintf("%d", gasUsedInt))
+	gasFee := gasPrice.Mul(gasUsed)
+	return gasFee, nil
 }
 
 func quote(amountA, reserveA, reserveB *big.Int) *big.Int {
