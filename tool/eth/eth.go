@@ -192,7 +192,7 @@ func GetTxStatus(hash string) (status uint64, err error) {
 	return
 }
 
-func GetUniPrice(pair, token string, amount *big.Int) (price *big.Int, err error) {
+func GetUniPrice(pair, token string, amount decimal.Decimal) (price decimal.Decimal, err error) {
 	conf := config.GetConfig()
 	client, err := ethclient.Dial(conf.Eth.Host)
 	if err != nil {
@@ -218,13 +218,17 @@ func GetUniPrice(pair, token string, amount *big.Int) (price *big.Int, err error
 
 	reserves, err := uniPair.GetReserves(nil)
 
+	amountBig := amount.BigInt()
+
 	if tokenStr == token0Str {
-		return quote(amount, reserves.Reserve0, reserves.Reserve1), nil
+		res := quote(amountBig, reserves.Reserve0, reserves.Reserve1)
+		return decimal.NewFromBigInt(res, 0), nil
 	} else if tokenStr == token1Str {
-		return quote(amount, reserves.Reserve1, reserves.Reserve0), nil
+		res := quote(amountBig, reserves.Reserve1, reserves.Reserve0)
+		return decimal.NewFromBigInt(res, 0), nil
 	}
 
-	return nil, errors.New("wrong token")
+	return decimal.Zero, errors.New("wrong token")
 }
 
 func IsAddress(addr string) bool {
@@ -242,7 +246,7 @@ func IsContract(addr string) (res bool, err error) {
 		return
 	}
 	address := common.HexToAddress(addr)
-	bytecode, err := client.CodeAt(context.Background(), address, nil) // nil is latest block
+	bytecode, err := client.CodeAt(context.Background(), address, nil)
 	if err != nil {
 		log.Fatal(err)
 	}
