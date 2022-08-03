@@ -9,6 +9,7 @@ import (
 
 type TransferRecords struct {
 	ID         uint
+	Module     string
 	Type       int8
 	From       string
 	Hash       string
@@ -28,7 +29,7 @@ func (c *TransferRecords) BeforeCreate(tx *gorm.DB) error {
 
 func createTable() error {
 	db := database.GetDB()
-	return db.Exec("CREATE TABLE `transfer_records` (\n`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,\n`type` tinyint(1) NOT NULL,\n`from` char(42) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n`hash` char(66) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n`nonce` int(11) UNSIGNED NOT NULL,\n`status` tinyint(1) NOT NULL,\n`create_time` datetime NOT NULL,\nPRIMARY KEY (`id`)\n) ENGINE=InnoDB\nDEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci\nAUTO_INCREMENT=1\nROW_FORMAT=DYNAMIC;").Error
+	return db.Exec("CREATE TABLE `transfer_records` (\n\t`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,\n\t`module` varchar(32) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`hash` char(66) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`nonce` int(11) UNSIGNED NOT NULL,\n\t`status` tinyint(1) NOT NULL,\n\t`create_time` datetime NOT NULL,\n\tPRIMARY KEY (`id`)\n) ENGINE=InnoDB\nDEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci\nAUTO_INCREMENT=1\nROW_FORMAT=DYNAMIC\nAVG_ROW_LENGTH=0;").Error
 }
 
 type Model struct {
@@ -73,8 +74,9 @@ func (m *Model) Add() {
 	m.Error = m.Db.Create(&m.Data).Error
 }
 
-func (m *Model) InitPending(from string) *Model {
-	m.Error = m.Db.Where("`from` = ? AND `status` = 1", strings.ToLower(from)).Take(&m.Data).Error
+func (m *Model) InitPending(from string, module string) *Model {
+	m.Error = m.Db.Where("`from` = ? AND `module` = ? AND `status` = 1", strings.ToLower(from), module).
+		Take(&m.Data).Error
 	return m
 }
 

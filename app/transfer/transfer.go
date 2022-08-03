@@ -58,9 +58,9 @@ func InitTrans(priKeyCt aes.Decoder, password []byte) (e error) {
 	return
 }
 
-func Transfer(limit int) (err error) {
+func Transfer(limit int, module string) (err error) {
 	conf := config.GetConfig()
-	pending := transferrecords.New(nil).InitPending(FromAddress)
+	pending := transferrecords.New(nil).InitPending(FromAddress, module)
 	if pending.Data.ID > 0 {
 		var status uint64
 		status, err = eth.GetTxStatus(pending.Data.Hash)
@@ -85,7 +85,7 @@ func Transfer(limit int) (err error) {
 		}
 	}
 
-	waitingList := transferdetails.New(nil).InitWaitingList(limit)
+	waitingList := transferdetails.New(nil).InitWaitingList(limit, module)
 	length := len(waitingList.List)
 	if length == 0 {
 		return
@@ -148,16 +148,17 @@ func Transfer(limit int) (err error) {
 	tr.Data.From = FromAddress
 	tr.Data.Hash = hash
 	tr.Data.Nonce = nonce
+	tr.Data.Module = module
 	tr.Add()
 
 	transferdetails.New(nil).SetExec(ids, tr.Data.ID)
 	return
 }
 
-func LockTransfer() (err error) {
+func LockTransfer(module string) (err error) {
 	limit := 1
 	conf := config.GetConfig()
-	pending := transferrecords.New(nil).InitPending(FromAddress)
+	pending := transferrecords.New(nil).InitPending(FromAddress, module)
 	if pending.Data.ID > 0 {
 		var status uint64
 		status, err = eth.GetTxStatus(pending.Data.Hash)
@@ -182,7 +183,7 @@ func LockTransfer() (err error) {
 		}
 	}
 
-	waitingList := locktransferdetails.New(nil).InitWaitingList(limit)
+	waitingList := locktransferdetails.New(nil).InitWaitingList(limit, module)
 	length := len(waitingList.List)
 	if length == 0 {
 		return
@@ -241,6 +242,7 @@ func LockTransfer() (err error) {
 	tr.Data.From = FromAddress
 	tr.Data.Hash = hash
 	tr.Data.Nonce = nonce
+	tr.Data.Module = module
 	tr.Add()
 
 	locktransferdetails.New(nil).SetExec([]uint{waiting.Data.ID}, tr.Data.ID)
