@@ -31,7 +31,7 @@ func (c *TransferDetails) BeforeCreate(tx *gorm.DB) error {
 
 func createTable() error {
 	db := database.GetDB()
-	return db.Exec("CREATE TABLE `transfer_details` (\n\t`id` int(11) NOT NULL,\n\t`module` varchar(32) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`token` char(42) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '',\n\t`to` char(42) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '',\n\t`amount` decimal(32,0)  UNSIGNED NOT NULL DEFAULT 0,\n\t`status` tinyint(1) NOT NULL,\n\t`transfer_id` int(11) NOT NULL DEFAULT 0,\n\t`create_time` datetime NOT NULL,\n\tPRIMARY KEY (`id`),\n\tKEY `trans`(`transfer_id`) USING BTREE\n) ENGINE=InnoDB\nDEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci\nROW_FORMAT=DYNAMIC\nAVG_ROW_LENGTH=0;").Error
+	return db.Exec("CREATE TABLE `transfer_details` (\n\t`id` int(11) UNSIGNED NOT NULL AUTO_INCREMENT,\n\t`module` varchar(32) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,\n\t`token` char(42) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '',\n\t`to` char(42) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL DEFAULT '',\n\t`amount` decimal(32,0)  UNSIGNED NOT NULL DEFAULT 0,\n\t`status` tinyint(1) NOT NULL,\n\t`transfer_id` int(11) NOT NULL DEFAULT 0,\n\t`create_time` datetime NOT NULL,\n\tPRIMARY KEY (`id`),\n\tKEY `trans`(`transfer_id`) USING BTREE\n) ENGINE=InnoDB\nDEFAULT CHARACTER SET=utf8 COLLATE=utf8_general_ci\nAUTO_INCREMENT=2\nROW_FORMAT=DYNAMIC\nAVG_ROW_LENGTH=16384;").Error
 }
 
 type Model struct {
