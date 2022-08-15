@@ -12,6 +12,7 @@ import (
 )
 
 var ca imcache.Cache
+var prefix string
 
 // InitCache .
 func InitCache() error {
@@ -28,11 +29,15 @@ func InitCache() error {
 	if err != nil {
 		return err
 	}
+	prefix = conf.Redis.Prefix
 	return nil
 }
 
 // Set .
 func Set(key string, value interface{}, timeout int64) error {
+	if prefix != "" {
+		key = prefix + key
+	}
 	if ca == nil {
 		panic("cache 未初始化")
 	}
@@ -41,6 +46,9 @@ func Set(key string, value interface{}, timeout int64) error {
 }
 
 func SetNX(key string, timeout int64) (bool, error) {
+	if prefix != "" {
+		key = prefix + key
+	}
 	if ca == nil {
 		panic("cache 未初始化")
 	}
@@ -49,6 +57,9 @@ func SetNX(key string, timeout int64) (bool, error) {
 
 // Get .
 func Get(key string) interface{} {
+	if prefix != "" {
+		key = prefix + key
+	}
 	if ca == nil {
 		panic("cache 未初始化")
 	}
@@ -56,6 +67,9 @@ func Get(key string) interface{} {
 }
 
 func GetInt64(key string) (int64, error) {
+	if prefix != "" {
+		key = prefix + key
+	}
 	if ca == nil {
 		panic("cache 未初始化")
 	}
@@ -71,6 +85,9 @@ func GetInt64(key string) (int64, error) {
 }
 
 func GetString(key string) (string, error) {
+	if prefix != "" {
+		key = prefix + key
+	}
 	if ca == nil {
 		panic("cache 未初始化")
 	}
@@ -82,6 +99,9 @@ func GetString(key string) (string, error) {
 }
 
 func GetUint64(key string) (uint64, error) {
+	if prefix != "" {
+		key = prefix + key
+	}
 	if ca == nil {
 		panic("cache 未初始化")
 	}
@@ -97,6 +117,9 @@ func GetUint64(key string) (uint64, error) {
 }
 
 func IncrValue(key string, value interface{}) error {
+	if prefix != "" {
+		key = prefix + key
+	}
 	if ca == nil {
 		panic("cache 未初始化")
 	}
@@ -104,6 +127,9 @@ func IncrValue(key string, value interface{}) error {
 }
 
 func DecrValue(key string, value interface{}) error {
+	if prefix != "" {
+		key = prefix + key
+	}
 	if ca == nil {
 		panic("cache 未初始化")
 	}
@@ -112,6 +138,9 @@ func DecrValue(key string, value interface{}) error {
 
 // IsExist .
 func IsExist(key string) bool {
+	if prefix != "" {
+		key = prefix + key
+	}
 	if ca == nil {
 		panic("cache 未初始化")
 	}
@@ -120,6 +149,9 @@ func IsExist(key string) bool {
 
 // Delete .
 func Delete(key string) error {
+	if prefix != "" {
+		key = prefix + key
+	}
 	if ca == nil {
 		panic("cache 未初始化")
 	}

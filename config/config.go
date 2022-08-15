@@ -28,6 +28,7 @@ type redisConfig struct {
 	Password string `json:"password"`
 	Port     string `json:"port"`
 	Db       int    `json:"db"`
+	Prefix   string `json:"prefix"`
 }
 
 type ethConfig struct {
