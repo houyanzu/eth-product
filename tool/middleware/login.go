@@ -2,7 +2,7 @@ package middleware
 
 import (
 	"github.com/gin-gonic/gin"
-	"github.com/houyanzu/cache"
+	"github.com/houyanzu/eth-product/tool/cache"
 	"net/http"
 	"strings"
 )
@@ -38,7 +38,7 @@ func loginHandler(c *gin.Context) {
 		return
 	}
 
-	userId := cache.GetInt(token)
+	userId, _ := cache.GetInt64(token)
 	if userId <= 0 {
 		if lang == "zh" {
 			c.JSON(http.StatusOK, gin.H{
@@ -57,7 +57,7 @@ func loginHandler(c *gin.Context) {
 		return
 	}
 
-	tokenAccount := cache.GetString(token + "_address")
+	tokenAccount, _ := cache.GetString(token + "_address")
 	if account != tokenAccount {
 		if lang == "zh" {
 			c.JSON(http.StatusOK, gin.H{
@@ -102,7 +102,7 @@ func adminLoginHandler(c *gin.Context) {
 		return
 	}
 
-	userId := cache.GetInt(tokenKey)
+	userId, _ := cache.GetInt64(tokenKey)
 	if userId <= 0 {
 		if lang == "zh" {
 			c.JSON(http.StatusOK, gin.H{
