@@ -14,6 +14,10 @@ func NewFromTime(t time.Time) DateTime {
 	return DateTime(t)
 }
 
+func NewFromUnix(timestamp int64) DateTime {
+	return DateTime(time.Unix(timestamp, 0))
+}
+
 func NewFromNow() DateTime {
 	return DateTime(time.Now())
 }
@@ -72,4 +76,12 @@ func (date DateTime) Before(date2 DateTime) bool {
 
 func (date DateTime) Add(duration time.Duration) DateTime {
 	return DateTime(time.Time(date).Add(duration))
+}
+
+func (date DateTime) Unix() int64 {
+	return time.Time(date).Unix()
+}
+
+func (date DateTime) UnixNano() int64 {
+	return time.Time(date).UnixNano()
 }
