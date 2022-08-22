@@ -85,3 +85,7 @@ func (date DateTime) Unix() int64 {
 func (date DateTime) UnixNano() int64 {
 	return time.Time(date).UnixNano()
 }
+
+func (date DateTime) AddDate(years, months, days int) DateTime {
+	return NewFromTime(time.Time(date).AddDate(years, months, days))
+}
