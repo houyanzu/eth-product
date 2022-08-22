@@ -75,7 +75,7 @@ func Monitor(contract string, blockDiff uint64) (res EventLog, err error) {
 	return
 }
 
-func (e EventLog) Foreach(f func(index int, log types.Log)) {
+func (e EventLog) Foreach(f func(index int, log types.Log, chainRecordId uint)) {
 	for k, v := range e.logs {
 		blockNum := v.BlockNumber
 		hash := v.TxHash.Hex()
@@ -85,7 +85,7 @@ func (e EventLog) Foreach(f func(index int, log types.Log)) {
 		record.Data.EventId = v.Topics[0].Hex()
 		record.Data.Hash = hash
 		record.Add()
-		f(k, v)
+		f(k, v, record.Data.ID)
 	}
 	if e.endBlockNum <= e.netLastNum {
 		record := chainrecord.New(nil)
