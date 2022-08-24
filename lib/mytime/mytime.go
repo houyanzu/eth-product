@@ -31,7 +31,7 @@ func ParseInLocation(t string) (DateTime, error) {
 }
 
 func (date DateTime) MarshalJSON() ([]byte, error) {
-	date = date.Add(-8 * time.Hour)
+	//date = date.Add(-8 * time.Hour)
 	var stamp = fmt.Sprintf("\"%s\"", time.Time(date).Format("2006-01-02 15:04:05"))
 	return []byte(stamp), nil
 }
