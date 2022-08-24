@@ -3,6 +3,7 @@ package crypto
 import (
 	"crypto/md5"
 	"crypto/sha1"
+	"crypto/sha256"
 	"encoding/base64"
 	"fmt"
 	"io"
@@ -10,6 +11,12 @@ import (
 
 func Sha1Str(text string) string {
 	t := sha1.New()
+	_, _ = io.WriteString(t, text)
+	return fmt.Sprintf("%x", t.Sum(nil))
+}
+
+func Sha256Str(text string) string {
+	t := sha256.New()
 	_, _ = io.WriteString(t, text)
 	return fmt.Sprintf("%x", t.Sum(nil))
 }
