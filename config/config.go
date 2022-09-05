@@ -10,6 +10,7 @@ type Config struct {
 	Mysql mysqlConfig `json:"mysql"`
 	Redis redisConfig `json:"redis"`
 	Eth   ethConfig   `json:"eth"`
+	Extra extra       `json:"extra"`
 }
 
 type mysqlConfig struct {
@@ -38,6 +39,10 @@ type ethConfig struct {
 	ChainId               int64  `json:"chain_id"`
 	MultiTransferContract string `json:"multi_transfer_contract"`
 	LockTransferContract  string `json:"lock_transfer_contract"`
+}
+
+type extra struct {
+	DingTalkURL string `json:"ding_talk_url"`
 }
 
 var internalConfig *Config
