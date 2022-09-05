@@ -62,8 +62,9 @@ func ApiMonitor(contract string, blockDiff uint64) (res EventLog, err error) {
 		return
 	}
 
+	str := strings.ReplaceAll(string(resp), `"0x"`, `"0x0"`)
 	var logRes apiLogRes
-	err = json.Unmarshal(resp, &logRes)
+	err = json.Unmarshal([]byte(str), &logRes)
 	if err != nil {
 		return
 	}
