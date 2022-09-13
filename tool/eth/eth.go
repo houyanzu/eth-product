@@ -3,6 +3,7 @@ package eth
 import (
 	"context"
 	"crypto/ecdsa"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
@@ -12,11 +13,14 @@ import (
 	"github.com/houyanzu/eth-product/config"
 	"github.com/houyanzu/eth-product/lib/contract/standardcoin"
 	"github.com/houyanzu/eth-product/lib/contract/unipair"
+	"github.com/houyanzu/eth-product/lib/httptool"
 	"github.com/shopspring/decimal"
 	"log"
 	"math/big"
 	"regexp"
+	"strconv"
 	"strings"
+	"time"
 )
 
 func GetClientAndAuth(priKey string, gasLimit uint64, value *big.Int) (client *ethclient.Client, auth *bind.TransactOpts, err error) {
@@ -276,6 +280,33 @@ func GetGasFeeByHash(hash string) (decimal.Decimal, error) {
 	gasUsed, _ := decimal.NewFromString(fmt.Sprintf("%d", gasUsedInt))
 	gasFee := gasPrice.Mul(gasUsed)
 	return gasFee, nil
+}
+
+func GetApiLastBlockNum() (num uint64, err error) {
+	var res struct {
+		Status string `json:"status"`
+		Result string `json:"result"`
+	}
+	conf := config.GetConfig()
+	now := time.Now().Unix()
+	url := conf.Eth.ApiHost +
+		"?module=block&action=getblockcountdown" +
+		"&blockno=" + fmt.Sprintf("%d", now) +
+		"&apikey=" + conf.Eth.ApiKey
+	resp, code, err := httptool.Get(url, 20*time.Second)
+	if err != nil {
+		return
+	}
+	if code != 200 {
+		err = errors.New(string(resp))
+		return
+	}
+	err = json.Unmarshal(resp, &res)
+	if err != nil {
+		return
+	}
+
+	return strconv.ParseUint(res.Result, 10, 64)
 }
 
 func quote(amountA, reserveA, reserveB *big.Int) *big.Int {

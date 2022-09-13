@@ -1,15 +1,14 @@
 package monitor
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"github.com/ethereum/go-ethereum/core/types"
-	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/houyanzu/eth-product/config"
 	"github.com/houyanzu/eth-product/database/chainrecord"
 	"github.com/houyanzu/eth-product/lib/httptool"
+	"github.com/houyanzu/eth-product/tool/eth"
 	"strings"
 	"time"
 )
@@ -21,10 +20,6 @@ type apiLogRes struct {
 func ApiMonitor(contract string, blockDiff uint64) (res EventLog, err error) {
 	contract = strings.ToLower(contract)
 	conf := config.GetConfig()
-	client, err := ethclient.Dial(conf.Eth.Host)
-	if err != nil {
-		return
-	}
 
 	lastBlockNum := chainrecord.GetLastBlockNum(contract)
 	if lastBlockNum == 0 {
@@ -40,11 +35,14 @@ func ApiMonitor(contract string, blockDiff uint64) (res EventLog, err error) {
 			panic("未初始化")
 		}
 	}
-	header, err := client.HeaderByNumber(context.Background(), nil)
+	netLastNum, err := eth.GetApiLastBlockNum()
 	if err != nil {
 		return
 	}
-	netLastNum := header.Number.Uint64()
+	if netLastNum == 0 {
+		err = errors.New("zero")
+		return
+	}
 	endBlockNum := lastBlockNum + blockDiff
 
 	url := conf.Eth.ApiHost +
