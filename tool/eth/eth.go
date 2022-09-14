@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/ethereum/go-ethereum/crypto"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/houyanzu/eth-product/config"
@@ -288,10 +289,11 @@ func GetApiLastBlockNum() (num uint64, err error) {
 		Result string `json:"result"`
 	}
 	conf := config.GetConfig()
-	now := time.Now().Unix()
+	now := time.Now().Unix() - 5
 	url := conf.Eth.ApiHost +
-		"?module=block&action=getblockcountdown" +
-		"&blockno=" + fmt.Sprintf("%d", now) +
+		"?module=block&action=getblocknobytime" +
+		"&timestamp=" + fmt.Sprintf("%d", now) +
+		"&closest=before" +
 		"&apikey=" + conf.Eth.ApiKey
 	resp, code, err := httptool.Get(url, 20*time.Second)
 	if err != nil {
@@ -307,6 +309,26 @@ func GetApiLastBlockNum() (num uint64, err error) {
 	}
 
 	return strconv.ParseUint(res.Result, 10, 64)
+}
+
+func CreateAddress() (address, privateKeyString string, err error) {
+	privateKey, _ := crypto.GenerateKey()
+	if err != nil {
+		return
+	}
+
+	privateKeyBytes := crypto.FromECDSA(privateKey)
+	privateKeyString = hexutil.Encode(privateKeyBytes)[2:]
+
+	publicKey := privateKey.Public()
+	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
+	if !ok {
+		err = errors.New("cannot assert type: publicKey is not of type *ecdsa.PublicKey")
+		return
+	}
+
+	address = crypto.PubkeyToAddress(*publicKeyECDSA).Hex()
+	return
 }
 
 func quote(amountA, reserveA, reserveB *big.Int) *big.Int {
