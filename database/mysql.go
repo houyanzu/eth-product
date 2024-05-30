@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/houyanzu/eth-product/config"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
+	//"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 
 	"gorm.io/driver/mysql"
@@ -33,7 +33,7 @@ func InitMysql() error {
 				TablePrefix:   conf.Mysql.Prefix, // 表名前缀
 				SingularTable: true,              // 使用单数表名
 			},
-			Logger: logger.Default.LogMode(logger.Silent),
+			//Logger: logger.Default.LogMode(logger.Silent),
 		})
 	if err != nil {
 		return err

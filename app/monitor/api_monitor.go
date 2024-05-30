@@ -8,6 +8,7 @@ import (
 	"github.com/houyanzu/eth-product/config"
 	"github.com/houyanzu/eth-product/database/chainrecord"
 	"github.com/houyanzu/eth-product/lib/httptool"
+	"github.com/houyanzu/eth-product/lib/mylog"
 	"github.com/houyanzu/eth-product/tool/eth"
 	"strings"
 	"time"
@@ -51,6 +52,7 @@ func ApiMonitor(contract string, blockDiff uint64) (res EventLog, err error) {
 		"&toBlock=" + fmt.Sprintf("%d", endBlockNum) +
 		"&address=" + contract +
 		"&apikey=" + conf.Eth.ApiKey
+	mylog.Write("url:", url)
 	resp, code, err := httptool.Get(url, 20*time.Second)
 	if err != nil {
 		return
@@ -63,6 +65,7 @@ func ApiMonitor(contract string, blockDiff uint64) (res EventLog, err error) {
 	str := strings.ReplaceAll(string(resp), `"logIndex":"0x"`, `"logIndex":"0x0"`)
 	str = strings.ReplaceAll(str, `"transactionIndex":"0x"`, `"transactionIndex":"0x0"`)
 	var logRes apiLogRes
+	mylog.Write(str)
 	err = json.Unmarshal([]byte(str), &logRes)
 	if err != nil {
 		fmt.Println(url)

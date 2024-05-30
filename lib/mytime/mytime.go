@@ -8,32 +8,48 @@ import (
 	"time"
 )
 
-type DateTime time.Time
+type DateTime struct {
+	data   time.Time
+	isDate bool
+}
 
 func NewFromTime(t time.Time) DateTime {
-	return DateTime(t)
+	return DateTime{t, false}
 }
 
 func NewFromUnix(timestamp int64) DateTime {
-	return DateTime(time.Unix(timestamp, 0))
+	return DateTime{time.Unix(timestamp, 0), false}
 }
 
 func NewFromNow() DateTime {
-	return DateTime(time.Now())
+	return DateTime{time.Now(), false}
 }
 
 func ParseInLocation(t string) (DateTime, error) {
-	ext, err := time.ParseInLocation("2006-01-02 15:04:05", t, time.Local)
-	if err != nil {
-		return DateTime{}, err
+	if len(t) == 19 {
+		ext, err := time.ParseInLocation("2006-01-02 15:04:05", t, time.Local)
+		if err != nil {
+			return DateTime{}, err
+		}
+		return DateTime{ext, false}, nil
+	} else {
+		ext, err := time.ParseInLocation("2006-01-02", t, time.Local)
+		if err != nil {
+			return DateTime{}, err
+		}
+		return DateTime{ext, true}, nil
 	}
-	return DateTime(ext), nil
 }
 
 func (date DateTime) MarshalJSON() ([]byte, error) {
 	//date = date.Add(-8 * time.Hour)
-	var stamp = fmt.Sprintf("\"%s\"", time.Time(date).Format("2006-01-02 15:04:05"))
-	return []byte(stamp), nil
+	if date.isDate {
+		var stamp = fmt.Sprintf("\"%s\"", date.data.Format("2006-01-02"))
+		return []byte(stamp), nil
+	} else {
+		var stamp = fmt.Sprintf("\"%s\"", date.data.Format("2006-01-02 15:04:05"))
+		return []byte(stamp), nil
+	}
 }
 
 func (date *DateTime) UnmarshalJSON(b []byte) error {
@@ -41,51 +57,80 @@ func (date *DateTime) UnmarshalJSON(b []byte) error {
 		return nil
 	}
 	b = bytes.Trim(b, "\"")
-	ext, err := time.ParseInLocation("2006-01-02 15:04:05", string(b), time.Local)
-	if err != nil {
-		return err
+	if len(b) == 19 {
+		ext, err := time.ParseInLocation("2006-01-02 15:04:05", string(b), time.Local)
+		if err != nil {
+			return err
+		}
+		*date = DateTime{ext, false}
+		return nil
+	} else {
+		ext, err := time.ParseInLocation("2006-01-02", string(b), time.Local)
+		if err != nil {
+			return err
+		}
+		*date = DateTime{ext, true}
+		return nil
 	}
-	*date = DateTime(ext)
-	return nil
+
 }
 
 func (date *DateTime) Scan(value interface{}) (err error) {
 	nullTime := &sql.NullTime{}
 	err = nullTime.Scan(value)
-	*date = DateTime(nullTime.Time)
+	*date = DateTime{nullTime.Time, false}
 	return
 }
 
 func (date DateTime) Value() (driver.Value, error) {
-	y, m, d := time.Time(date).Date()
-	h, i, s := time.Time(date).Clock()
-	return time.Date(y, m, d, h, i, s, 0, time.Time(date).Location()), nil
+	y, m, d := date.data.Date()
+	h, i, s := date.data.Clock()
+	return time.Date(y, m, d, h, i, s, 0, date.data.Location()), nil
 }
 
 func (date DateTime) Time() time.Time {
-	return time.Time(date)
+	return date.data
 }
 
 func (date DateTime) Format() string {
-	return time.Time(date).Format("2006-01-02 15:04:05")
+	layout := "2006-01-02 15:04:05"
+	if date.isDate {
+		layout = "2006-01-02"
+	}
+	return date.data.Format(layout)
 }
 
 func (date DateTime) Before(date2 DateTime) bool {
-	return time.Time(date).Before(time.Time(date2))
+	return date.data.Before(date2.data)
 }
 
 func (date DateTime) Add(duration time.Duration) DateTime {
-	return DateTime(time.Time(date).Add(duration))
+	date.data = date.data.Add(duration)
+	return date
 }
 
 func (date DateTime) Unix() int64 {
-	return time.Time(date).Unix()
+	return date.data.Unix()
 }
 
 func (date DateTime) UnixNano() int64 {
-	return time.Time(date).UnixNano()
+	return date.data.UnixNano()
 }
 
 func (date DateTime) AddDate(years, months, days int) DateTime {
-	return NewFromTime(time.Time(date).AddDate(years, months, days))
+	return NewFromTime(date.data.AddDate(years, months, days))
+}
+
+func (date DateTime) SetIsDate(isDate bool) DateTime {
+	date.isDate = isDate
+	return date
+}
+
+func (date DateTime) IsDate() bool {
+	return date.isDate
+}
+
+func (date DateTime) DiffDays(date2 DateTime) int {
+	d := date.data.Sub(date2.data)
+	return int(d.Hours() / 24)
 }

@@ -15,6 +15,7 @@ import (
 	"github.com/houyanzu/eth-product/lib/contract/standardcoin"
 	"github.com/houyanzu/eth-product/lib/contract/unipair"
 	"github.com/houyanzu/eth-product/lib/httptool"
+	"github.com/houyanzu/eth-product/lib/mylog"
 	"github.com/shopspring/decimal"
 	"log"
 	"math/big"
@@ -295,6 +296,7 @@ func GetApiLastBlockNum() (num uint64, err error) {
 		"&timestamp=" + fmt.Sprintf("%d", now) +
 		"&closest=before" +
 		"&apikey=" + conf.Eth.ApiKey
+	mylog.Write("url:", url)
 	resp, code, err := httptool.Get(url, 20*time.Second)
 	if err != nil {
 		return

@@ -27,6 +27,11 @@ func Write(v ...interface{}) {
 	_ = myLog.Output(2, fmt.Sprintln(now, v))
 }
 
+func Writef(format string, v ...interface{}) {
+	now := time.Now()
+	_ = myLog.Output(2, fmt.Sprintf("%v"+format, now, v))
+}
+
 func Close() {
 	_ = logFile.Close()
 }
